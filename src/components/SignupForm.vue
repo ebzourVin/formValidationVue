@@ -1,32 +1,34 @@
 <template>
     <form @submit.prevent="handleSubmit">
         <label>name</label>
-        <input type="text"  v-model="name">
+        <input type="text"  v-model="v$.name.$model">
 
-        <div v-if="!$v.name.required" class="error" >Name is required</div>
-        <!-- <div v-if="$v.name.$error">Name field has an error.</div> -->
+        <div v-if="v$.name.required.$invalid" class="error" >Name is required  </div>
+        <div v-if="v$.name.minLength.$invalid" class="error" >Name must be atleast must be atleast {{v$.name.minLength.$params.min}} letters.</div>
 
-         <!-- <div class="error" v-if="!$v.name.minLength">Name must have at least {{$v.name.$params.minLength.min}} letters.</div> -->
-<!-- 
+
         <label>email</label>
-        <input type="email"  v-model="email">
+        <input type="email"  v-model="v$.email.$model">
 
-        <div class="error" v-if="!$v.email.required">email is required</div>
-        <div class="error" v-if="!$v.email.minLength">email must have at least {{$v.email.$params.minLength.min}} letters.</div>
+        <div  v-if="v$.email.required.$invalid" class="error">email is required</div>
+        <div  v-if="v$.email.minLength.$invalid" class="error">email must have at least {{v$.email.minLength.$params.min}} letters.</div>
 
         <label>phone</label>
-        <input type="text"  v-model="phone">
+        <input type="text"  v-model="v$.phone.$model">
 
-        <div class="error" v-if="!$v.phone.required">phone is required</div>
-        <div class="error" v-if="!$v.phone.minLength">phone must have at least {{$v.phone.$params.minLength.min}} letters.</div>
+        <div  v-if="v$.phone.required.$invalid" class="error">phone is required</div>
+        <div  v-if="v$.phone.minLength.$invalid" class="error">phone must have at least {{v$.phone.minLength.$params.min}} letters.</div>
 
         <label>address</label>
-        <input type="text"  v-model="address"> -->
-
-        <button class="button" type="submit" :disabled="submitStatus === 'PENDING'">Submit!</button>
-        <!-- <p class="" v-if="submitStatus === 'OK'">Thanks for your submission!</p>
+      <input type="text"  v-model="v$.address.$model">
+        <div  v-if="v$.address.required.$invalid" class="error">address is required</div>
+        <div  v-if="v$.address.minLength.$invalid" class="error">address must have at least {{v$.address.minLength.$params.min}} letters.</div>
+        <div class="submit" >
+          <button class="button" type="submit" :disabled="submitStatus === 'PENDING'">Submit!</button>
+        </div>
+        <p class="" v-if="submitStatus === 'OK'">Thanks for your submission!</p>
         <p class="" v-if="submitStatus === 'ERROR'">Please fill the form correctly.</p>
-        <p class="" v-if="submitStatus === 'PENDING'">Sending...</p> -->
+        <p class="" v-if="submitStatus === 'PENDING'">Sending...</p>
     </form>
 
   
@@ -35,15 +37,16 @@
 
 <script>
 
-    const { validationMixin, default: Vuelidate } = require('vuelidate')
-    const { required, minLength } = require('vuelidate/lib/validators')
+    import {useVuelidate} from '@vuelidate/core'
+    import { required, minLength } from '@vuelidate/validators'
 
-    // const { validationMixin, default: Vuelidate } = require('vuelidate')
-    // const { required, minLength } = require('vuelidate/lib/validators')
 
     export default{
 
         name: 'SignupForm',
+        setup(){
+          return {  v$: useVuelidate()  }
+        },
         props:[],
         data(){
             return {
@@ -51,36 +54,44 @@
                 email:'',
                 phone:'',
                 address:'',
+                submitStatus:'',
             }
         },
         validations:{
             name: {
                 required,
-                minLength: minLength(4)
+                minLength: minLength(4),
+                $lazy:true,
             },
             email: {
                 required,
                 minLength: minLength(5),
+                $lazy:true,
             },
             phone: {
                 required,
                 minLength: minLength(10),
+                $lazy:true,
             },
             address: {
                 required,
                 minLength: minLength(4),
+                $lazy:true,
             },
         },
         methods:{
-            handleSubmit(){
-                // console.log(this.v$);
-                // this.v$.$validate() // checks all inputs
-                // if (!this.v$.$error) {
-                //     // if ANY fail validation
-                //     alert('Form successfully submitted.');
-                // } else {
-                //     alert('Form failed validation');
-                // }
+          async handleSubmit(){
+                const isFormCorrect =  await this.v$.$validate()
+                console.log(isFormCorrect)
+                console.log('submit!');
+                if (!isFormCorrect) {
+                  this.submitStatus = 'ERROR';
+                } else {
+                  this.submitStatus = 'PENDING';
+                  setTimeout(() => {
+                    this.submitStatus = 'OK';
+                  }, 500)
+                }
             },
         },
 
@@ -123,7 +134,7 @@
     margin:auto;
     margin-top: 20px;
     color: white;
-    border-radius: 20px;
+    border-radius: 10px;
   }
   .submit {
     text-align: center;
